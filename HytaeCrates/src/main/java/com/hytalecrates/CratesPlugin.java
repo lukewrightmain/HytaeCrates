@@ -9,8 +9,12 @@ import com.hytalecrates.config.ConfigManager;
 import com.hytalecrates.crate.CrateManager;
 import com.hytalecrates.gui.GUIManager;
 import com.hytalecrates.key.KeyManager;
+import com.hytalecrates.listeners.CrateInteractListener;
 import com.hytalecrates.reward.RewardManager;
 import com.hytalecrates.util.MessageUtil;
+import com.hypixel.hytale.event.EventPriority;
+import com.hypixel.hytale.server.core.event.events.ecs.UseBlockEvent;
+import com.hypixel.hytale.server.core.event.events.player.PlayerInteractEvent;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,6 +34,7 @@ public class CratesPlugin extends JavaPlugin {
     private RewardManager rewardManager;
     private GUIManager guiManager;
     private MessageUtil messageUtil;
+    private CrateInteractListener crateInteractListener;
 
     public CratesPlugin(JavaPluginInit init) {
         super(init);
@@ -56,6 +61,7 @@ public class CratesPlugin extends JavaPlugin {
         this.keyManager = new KeyManager(this);
         this.rewardManager = new RewardManager(this);
         this.guiManager = new GUIManager(this);
+        this.crateInteractListener = new CrateInteractListener(this);
         
         // Load configurations
         configManager.loadConfigs();
@@ -70,6 +76,10 @@ public class CratesPlugin extends JavaPlugin {
         getCommandRegistry().registerCommand(new CrateCommand(this));
         getCommandRegistry().registerCommand(new CrateSetCommand(this));
         getCommandRegistry().registerCommand(new CrateRemoveCommand(this));
+
+        // Register event listeners
+        getEventRegistry().registerGlobal(EventPriority.NORMAL, PlayerInteractEvent.class, crateInteractListener::onPlayerInteract);
+        getEventRegistry().registerGlobal(EventPriority.NORMAL, UseBlockEvent.Pre.class, crateInteractListener::onUseBlock);
         
         getLogger().at(Level.INFO).log("HytaleCrates setup complete!");
     }

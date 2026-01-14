@@ -3,6 +3,7 @@ package com.hytalecrates.key;
 import com.hytalecrates.CratesPlugin;
 import com.hytalecrates.config.CrateConfig;
 import com.hytalecrates.crate.Crate;
+import com.hytalecrates.util.ItemIdUtil;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.server.core.entity.entities.Player;
@@ -11,6 +12,7 @@ import com.hypixel.hytale.server.core.inventory.transaction.ItemStackTransaction
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
+import org.bson.BsonValue;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -90,6 +92,28 @@ public class KeyManager {
     }
 
     /**
+     * Validates whether an {@link ItemStack} is a crate key.
+     * Uses BSON metadata (as used by the server inventory API).
+     */
+    public Optional<CrateKey> validateKeyItem(ItemStack itemStack) {
+        if (itemStack == null || itemStack.isEmpty()) {
+            return Optional.empty();
+        }
+
+        BsonDocument meta = itemStack.getMetadata();
+        if (meta == null) {
+            return Optional.empty();
+        }
+
+        BsonValue v = meta.get(CrateKey.NBT_KEY_TAG);
+        if (v == null || !v.isString()) {
+            return Optional.empty();
+        }
+
+        return getKey(v.asString().getValue());
+    }
+
+    /**
      * Checks if an item is a key for a specific crate.
      */
     public boolean isKeyForCrate(Map<String, Object> itemNbtData, String crateId) {
@@ -153,8 +177,8 @@ public class KeyManager {
                 .append(CrateKey.NBT_CRATE_TAG, new BsonString(key.getCrateId()));
 
         // NOTE: ItemStack expects an itemId string that matches an item asset id.
-        // For now we use the configured 'material' directly.
-        ItemStack itemStack = new ItemStack(key.getMaterial(), safeAmount, metadata);
+        String itemId = ItemIdUtil.resolveItemId(key.getMaterial());
+        ItemStack itemStack = new ItemStack(itemId, safeAmount, metadata);
         ItemStackTransaction tx = player.getInventory()
                 .getCombinedHotbarFirst()
                 .addItemStack(itemStack);
@@ -178,16 +202,26 @@ public class KeyManager {
      * @return true if successful
      */
     public boolean consumeKey(String playerUuid) {
-        // In actual implementation, this would:
-        // 1. Get the item in player's main hand
-        // 2. Reduce its amount by 1
-        // 3. If amount becomes 0, remove the item
-        //
-        // Example pseudo-code:
-        // ItemStack item = player.getInventory().getItemInMainHand();
-        // item.setAmount(item.getAmount() - 1);
-
+        // Kept for backward compatibility with placeholder callers.
         plugin.getLogger().at(Level.INFO).log("Consumed key from player %s", playerUuid);
+        return true;
+    }
+
+    /**
+     * Consumes 1 item from the player's active hotbar slot.
+     */
+    public boolean consumeKey(Player player) {
+        if (player == null) {
+            return false;
+        }
+
+        var inv = player.getInventory();
+        byte slot = inv.getActiveHotbarSlot();
+        if (slot == com.hypixel.hytale.server.core.inventory.Inventory.INACTIVE_SLOT_INDEX) {
+            return false;
+        }
+
+        inv.getHotbar().removeItemStackFromSlot((short) slot, 1);
         return true;
     }
 }

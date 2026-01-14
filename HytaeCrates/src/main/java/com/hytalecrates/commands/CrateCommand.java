@@ -42,6 +42,7 @@ public class CrateCommand extends AbstractCommand {
         addSubCommand(new SetSubCommand(plugin));
         addSubCommand(new RemoveSubCommand(plugin));
         addSubCommand(new GiveSubCommand(plugin));
+        addSubCommand(new ItemIdsSubCommand());
         addSubCommand(new ReloadSubCommand(plugin));
         addSubCommand(new HelpSubCommand(plugin));
     }
@@ -374,6 +375,67 @@ public class CrateCommand extends AbstractCommand {
         protected CompletableFuture<Void> execute(CommandContext ctx) {
             plugin.reload();
             ctx.sendMessage(MessageUtil.legacyToMessage("&aHytaleCrates configurations reloaded!"));
+            return CompletableFuture.completedFuture(null);
+        }
+    }
+
+    /**
+     * /crate itemids --query=<text> [--limit=<n>] - Lists item asset ids containing a substring.
+     *
+     * This is used to discover the *real* Hytale item ids (e.g. for keys/rewards) because
+     * Minecraft-style names like STICK/DIAMOND are not valid in Hytale.
+     */
+    private static class ItemIdsSubCommand extends AbstractCommand {
+        private final OptionalArg<String> queryArg;
+        private final OptionalArg<String> limitArg;
+
+        ItemIdsSubCommand() {
+            super("itemids", "Search Hytale item asset ids (admin debug)");
+            requirePermission("crates.admin");
+            this.queryArg = withOptionalArg("query", "Search substring", StringArgumentType.greedyString());
+            this.limitArg = withOptionalArg("limit", "Max results (default 20)", StringArgumentType.word());
+        }
+
+        @Override
+        protected CompletableFuture<Void> execute(CommandContext ctx) {
+            if (!ctx.provided(queryArg)) {
+                ctx.sendMessage(Message.raw("Usage: /crate itemids --query=<text> [--limit=<n>]"));
+                return CompletableFuture.completedFuture(null);
+            }
+
+            String q = ctx.get(queryArg).trim().toLowerCase();
+            int limit = 20;
+            if (ctx.provided(limitArg)) {
+                try {
+                    limit = Integer.parseInt(ctx.get(limitArg));
+                } catch (NumberFormatException ignored) {}
+                if (limit < 1) limit = 1;
+                if (limit > 200) limit = 200;
+            }
+
+            var assetMap = com.hypixel.hytale.server.core.asset.type.item.config.Item.getAssetMap();
+            var map = assetMap != null ? assetMap.getAssetMap() : null;
+            if (map == null || map.isEmpty()) {
+                ctx.sendMessage(MessageUtil.legacyToMessage("&cItem asset map is not available (assets not loaded yet?)."));
+                return CompletableFuture.completedFuture(null);
+            }
+
+            int found = 0;
+            ctx.sendMessage(MessageUtil.legacyToMessage("&e=== Item IDs matching: &f" + q + " &e==="));
+            for (String key : map.keySet()) {
+                if (key == null) continue;
+                if (key.toLowerCase().contains(q)) {
+                    ctx.sendMessage(Message.raw(" - " + key));
+                    found++;
+                    if (found >= limit) break;
+                }
+            }
+
+            ctx.sendMessage(MessageUtil.legacyToMessage("&7Found &e" + found + "&7 (limit " + limit + ")."));
+            if (found == 0) {
+                ctx.sendMessage(MessageUtil.legacyToMessage("&7Try shorter queries like &fwood&7, &fcoin&7, &fsword&7, &frod&7."));
+            }
+
             return CompletableFuture.completedFuture(null);
         }
     }

@@ -69,6 +69,56 @@ player.getInventory()
     .addItemStack(new ItemStack(itemId, quantity, metadata));
 ```
 
+### Event Registry (confirmed API)
+
+Plugins can subscribe to server events via `JavaPlugin.getEventRegistry()` (inherited from `PluginBase`).
+
+```java
+import com.hypixel.hytale.event.EventPriority;
+import com.hypixel.hytale.server.core.event.events.player.PlayerInteractEvent;
+
+@Override
+protected void setup() {
+    // ...
+    getEventRegistry().registerGlobal(
+        EventPriority.NORMAL,
+        PlayerInteractEvent.class,
+        event -> {
+            // event.getTargetBlock(), event.getItemInHand(), event.setCancelled(true), etc.
+        }
+    );
+}
+```
+
+Useful interaction events discovered:
+- `com.hypixel.hytale.server.core.event.events.player.PlayerInteractEvent`
+- `com.hypixel.hytale.server.core.event.events.ecs.UseBlockEvent` (has `InteractionContext`)
+
+### Discovering item asset ids (important)
+
+Minecraft-style item names like `STICK`, `DIAMOND`, etc are **not** valid Hytale item ids.
+To find the real ids, query the server’s loaded item asset map:
+
+```java
+import com.hypixel.hytale.server.core.asset.type.item.config.Item;
+
+var map = Item.getAssetMap().getAssetMap(); // Map<String, Item>
+```
+
+In this repo we also added a debug command:
+
+```text
+/crate itemids --query=<text> [--limit=<n>]
+```
+
+Example:
+
+```text
+/crate itemids --query=stick
+/crate itemids --query=rod
+/crate itemids --query=sword --limit=50
+```
+
 ### Key API Packages Discovered
 
 | Package | Purpose |

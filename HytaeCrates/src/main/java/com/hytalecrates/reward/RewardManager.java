@@ -2,6 +2,10 @@ package com.hytalecrates.reward;
 
 import com.hytalecrates.CratesPlugin;
 import com.hytalecrates.crate.Crate;
+import com.hytalecrates.util.ItemIdUtil;
+import com.hypixel.hytale.server.core.entity.entities.Player;
+import com.hypixel.hytale.server.core.inventory.ItemStack;
+import com.hypixel.hytale.server.core.inventory.transaction.ItemStackTransaction;
 
 import java.util.HashMap;
 import java.util.List;
@@ -87,31 +91,44 @@ public class RewardManager {
 
     /**
      * Gives a reward to a player.
-     * This is a placeholder that would integrate with Hytale's inventory API.
      *
-     * @param playerUuid The player's UUID
+     * @param player The player entity
      * @param reward The reward to give
      * @return true if successful
      */
-    public boolean giveReward(String playerUuid, Reward reward) {
+    public boolean giveReward(Player player, Reward reward) {
         if (reward == null) {
             return false;
         }
 
-        // In actual implementation, this would:
-        // 1. Create an ItemStack from the reward's item config
-        // 2. Apply display name, lore, enchantments
-        // 3. Add to player's inventory (or drop if full)
-        //
-        // Example pseudo-code:
-        // ItemStack item = createItemFromConfig(reward.getItem());
-        // if (!player.getInventory().addItem(item)) {
-        //     player.getWorld().dropItem(player.getLocation(), item);
-        // }
+        if (player == null) {
+            return false;
+        }
 
-        plugin.getLogger().at(Level.INFO).log("Gave reward %s (%s) to player %s",
-                reward.getItem().getDisplayName(), reward.getRarity(), playerUuid);
-        return true;
+        String itemId = ItemIdUtil.resolveItemId(reward.getItem().getMaterial());
+        int quantity = Math.max(1, Math.min(64, reward.getItem().getAmount()));
+        ItemStack stack = new ItemStack(itemId, quantity);
+
+        ItemStackTransaction tx = player.getInventory()
+                .getCombinedHotbarFirst()
+                .addItemStack(stack);
+
+        ItemStack remainder = tx.getRemainder();
+        boolean success = remainder == null || remainder.isEmpty();
+
+        plugin.getLogger().at(Level.INFO).log("Reward grant result=%s itemId=%s qty=%d player=%s",
+                success, itemId, quantity, player.getUuid());
+
+        return success;
+    }
+
+    /**
+     * Backwards-compatible placeholder signature used by older GUI scaffolding.
+     * The real server runtime should call {@link #giveReward(Player, Reward)} instead.
+     */
+    public boolean giveReward(String playerUuid, Reward reward) {
+        plugin.getLogger().at(Level.WARNING).log("giveReward(String, Reward) called for %s - this path is deprecated", playerUuid);
+        return false;
     }
 
     /**
