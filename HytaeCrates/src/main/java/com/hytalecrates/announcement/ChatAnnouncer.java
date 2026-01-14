@@ -6,6 +6,8 @@ import com.hytalecrates.reward.Rarity;
 import com.hytalecrates.reward.Reward;
 import com.hytalecrates.util.MessageUtil;
 
+import java.util.logging.Level;
+
 /**
  * Handles global chat announcements for crate wins.
  */
@@ -81,7 +83,7 @@ public class ChatAnnouncer {
         //     player.sendMessage(message);
         // }
 
-        plugin.getLogger().info("[BROADCAST] " + MessageUtil.stripColors(message));
+        plugin.getLogger().at(Level.INFO).log("[BROADCAST] %s", MessageUtil.stripColors(message));
     }
 
     /**
@@ -99,7 +101,7 @@ public class ChatAnnouncer {
         // Player player = ServerAPI.getPlayer(playerUuid);
         // player.sendMessage(message);
 
-        plugin.getLogger().info("[Private] " + message);
+        plugin.getLogger().at(Level.INFO).log("[Private] %s", message);
     }
 
     /**
@@ -112,7 +114,7 @@ public class ChatAnnouncer {
         );
 
         // Only broadcast to players with admin permission
-        plugin.getLogger().info("[Admin] " + message);
+        plugin.getLogger().at(Level.INFO).log("[Admin] %s", message);
     }
 
     /**

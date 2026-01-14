@@ -3,10 +3,19 @@ package com.hytalecrates.key;
 import com.hytalecrates.CratesPlugin;
 import com.hytalecrates.config.CrateConfig;
 import com.hytalecrates.crate.Crate;
+import com.hypixel.hytale.component.Ref;
+import com.hypixel.hytale.component.Store;
+import com.hypixel.hytale.server.core.entity.entities.Player;
+import com.hypixel.hytale.server.core.inventory.ItemStack;
+import com.hypixel.hytale.server.core.inventory.transaction.ItemStackTransaction;
+import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import org.bson.BsonDocument;
+import org.bson.BsonString;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.logging.Level;
 
 /**
  * Manages crate keys - creation, validation, and distribution.
@@ -32,7 +41,7 @@ public class KeyManager {
                 config.getKeyItem()
         );
         keys.put(key.getKeyId(), key);
-        plugin.getLogger().info("Registered key: " + key.getKeyId() + " for crate: " + crate.getId());
+        plugin.getLogger().at(Level.INFO).log("Registered key: %s for crate: %s", key.getKeyId(), crate.getId());
     }
 
     /**
@@ -114,40 +123,52 @@ public class KeyManager {
 
     /**
      * Gives a key item to a player.
-     * This is a placeholder that would integrate with Hytale's inventory API.
      *
-     * @param playerUuid The player's UUID
+     * @param store The entity store for the target player
+     * @param playerEntityRef The player's entity ref within that store
      * @param keyId The key ID to give
      * @param amount The amount of keys to give
      * @return true if successful
      */
-    public boolean giveKey(String playerUuid, String keyId, int amount) {
+    public boolean giveKey(Store<EntityStore> store, Ref<EntityStore> playerEntityRef, String keyId, int amount) {
         Optional<CrateKey> keyOpt = getKey(keyId);
         if (keyOpt.isEmpty()) {
-            plugin.getLogger().warning("Attempted to give unknown key: " + keyId);
+            plugin.getLogger().at(Level.WARNING).log("Attempted to give unknown key: %s", keyId);
             return false;
         }
 
         CrateKey key = keyOpt.get();
 
-        // In actual implementation, this would:
-        // 1. Create an ItemStack with the key's material, name, lore
-        // 2. Apply enchantment glow if configured
-        // 3. Set NBT data with our custom tags
-        // 4. Add to player's inventory
-        //
-        // Example pseudo-code:
-        // ItemStack item = new ItemStack(key.getMaterial(), amount);
-        // item.setDisplayName(key.getDisplayName());
-        // item.setLore(key.getLore());
-        // if (key.isEnchanted()) {
-        //     item.addEnchantmentGlow();
-        // }
-        // item.setNbtData(createKeyNbtData(key));
-        // player.getInventory().addItem(item);
+        Player player = store.getComponent(playerEntityRef, Player.getComponentType());
+        if (player == null) {
+            plugin.getLogger().at(Level.WARNING).log("Failed to resolve Player component for ref when giving key %s", keyId);
+            return false;
+        }
 
-        plugin.getLogger().info("Gave " + amount + "x " + key.getDisplayName() + " to player " + playerUuid);
-        return true;
+        int safeAmount = Math.max(1, Math.min(64, amount));
+
+        // Build metadata with our custom tags so we can validate keys later.
+        BsonDocument metadata = new BsonDocument()
+                .append(CrateKey.NBT_KEY_TAG, new BsonString(key.getKeyId()))
+                .append(CrateKey.NBT_CRATE_TAG, new BsonString(key.getCrateId()));
+
+        // NOTE: ItemStack expects an itemId string that matches an item asset id.
+        // For now we use the configured 'material' directly.
+        ItemStack itemStack = new ItemStack(key.getMaterial(), safeAmount, metadata);
+        ItemStackTransaction tx = player.getInventory()
+                .getCombinedHotbarFirst()
+                .addItemStack(itemStack);
+
+        ItemStack remainder = tx.getRemainder();
+        boolean success = remainder == null || remainder.isEmpty();
+
+        if (success) {
+            plugin.getLogger().at(Level.INFO).log("Gave %dx %s to player %s", safeAmount, key.getDisplayName(), player.getUuid());
+        } else {
+            plugin.getLogger().at(Level.INFO).log("Insufficient inventory space: remainder=%s", remainder);
+        }
+
+        return success;
     }
 
     /**
@@ -166,7 +187,7 @@ public class KeyManager {
         // ItemStack item = player.getInventory().getItemInMainHand();
         // item.setAmount(item.getAmount() - 1);
 
-        plugin.getLogger().info("Consumed key from player " + playerUuid);
+        plugin.getLogger().at(Level.INFO).log("Consumed key from player %s", playerUuid);
         return true;
     }
 }

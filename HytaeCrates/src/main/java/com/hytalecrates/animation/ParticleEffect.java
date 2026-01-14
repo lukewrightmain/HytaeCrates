@@ -4,6 +4,8 @@ import com.hytalecrates.CratesPlugin;
 import com.hytalecrates.crate.CrateLocation;
 import com.hytalecrates.reward.Rarity;
 
+import java.util.logging.Level;
+
 /**
  * Handles particle effects for crate animations.
  */
@@ -32,7 +34,7 @@ public class ParticleEffect {
         // World world = ServerAPI.getWorld(location.getWorldName());
         // world.spawnParticles(particleType, location.getX() + 0.5, location.getY() + 1, location.getZ() + 0.5, count, spread, spread, spread);
 
-        plugin.getLogger().fine("Playing particle effect: " + particleType + " at " + location.toDisplayString());
+        plugin.getLogger().at(Level.FINE).log("Playing particle effect: %s at %s", particleType, location.toDisplayString());
     }
 
     /**
@@ -80,7 +82,7 @@ public class ParticleEffect {
         // Additional spiral effect
         playSpiralEffect(location, particle, 3.0, 20);
 
-        plugin.getLogger().info("Playing LEGENDARY effect at " + location.toDisplayString());
+        plugin.getLogger().at(Level.INFO).log("Playing LEGENDARY effect at %s", location.toDisplayString());
     }
 
     /**
@@ -94,7 +96,7 @@ public class ParticleEffect {
             playEffect(particle, location, 30, 1.0);
         }
 
-        plugin.getLogger().info("Playing EPIC effect at " + location.toDisplayString());
+        plugin.getLogger().at(Level.INFO).log("Playing EPIC effect at %s", location.toDisplayString());
     }
 
     /**
@@ -104,7 +106,7 @@ public class ParticleEffect {
         String particle = plugin.getConfigManager().getMainConfig().getParticles().getRareParticle();
         playEffect(particle, location, 20, 0.8);
 
-        plugin.getLogger().info("Playing RARE effect at " + location.toDisplayString());
+        plugin.getLogger().at(Level.INFO).log("Playing RARE effect at %s", location.toDisplayString());
     }
 
     /**
@@ -114,7 +116,7 @@ public class ParticleEffect {
         String particle = plugin.getConfigManager().getMainConfig().getParticles().getCommonParticle();
         playEffect(particle, location, 10, 0.5);
 
-        plugin.getLogger().info("Playing COMMON effect at " + location.toDisplayString());
+        plugin.getLogger().at(Level.INFO).log("Playing COMMON effect at %s", location.toDisplayString());
     }
 
     /**
@@ -130,7 +132,7 @@ public class ParticleEffect {
         //     world.spawnParticles(particleType, x, y, z, 1, 0, 0, 0);
         // }
 
-        plugin.getLogger().fine("Playing spiral effect at " + location.toDisplayString());
+        plugin.getLogger().at(Level.FINE).log("Playing spiral effect at %s", location.toDisplayString());
     }
 
     /**

@@ -4,6 +4,7 @@ import com.hytalecrates.CratesPlugin;
 import com.hytalecrates.reward.Rarity;
 
 import java.util.UUID;
+import java.util.logging.Level;
 
 /**
  * Handles sound effects for crate animations.
@@ -29,7 +30,7 @@ public class SoundEffect {
         // Player player = ServerAPI.getPlayer(playerUuid);
         // player.playSound(sound, volume, pitch);
 
-        plugin.getLogger().fine("Playing sound: " + sound + " for player " + playerUuid);
+        plugin.getLogger().at(Level.FINE).log("Playing sound: %s for player %s", sound, playerUuid);
     }
 
     /**
@@ -93,7 +94,7 @@ public class SoundEffect {
         //     player.playSound(sound, 0.5f, 1.0f);
         // }
 
-        plugin.getLogger().info("Playing global win sound: " + sound);
+        plugin.getLogger().at(Level.INFO).log("Playing global win sound: %s", sound);
     }
 
     /**

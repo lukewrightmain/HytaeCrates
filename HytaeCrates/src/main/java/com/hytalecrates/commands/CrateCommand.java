@@ -3,471 +3,409 @@ package com.hytalecrates.commands;
 import com.hytalecrates.CratesPlugin;
 import com.hytalecrates.crate.Crate;
 import com.hytalecrates.crate.CrateLocation;
+import com.hytalecrates.util.MessageUtil;
 
-import java.util.ArrayList;
+import com.hypixel.hytale.server.core.Message;
+import com.hypixel.hytale.server.core.command.system.AbstractCommand;
+import com.hypixel.hytale.server.core.command.system.CommandContext;
+import com.hypixel.hytale.server.core.command.system.arguments.system.OptionalArg;
+import com.hypixel.hytale.server.core.command.system.arguments.types.StringArgumentType;
+import com.hypixel.hytale.server.core.command.system.basecommands.AbstractTargetPlayerCommand;
+import com.hypixel.hytale.component.Ref;
+import com.hypixel.hytale.component.Store;
+import com.hypixel.hytale.server.core.universe.PlayerRef;
+import com.hypixel.hytale.server.core.universe.world.World;
+import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+
 import java.util.Collection;
-import java.util.List;
-import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Main command handler for /crate commands.
  * Handles both player and admin subcommands.
  */
-public class CrateCommand {
+public class CrateCommand extends AbstractCommand {
 
     private final CratesPlugin plugin;
 
     public CrateCommand(CratesPlugin plugin) {
+        super("crate", "Main crate command for HytaleCrates");
         this.plugin = plugin;
+        
+        // Add aliases
+        addAliases("crates", "cr");
+        
+        // Add subcommands
+        addSubCommand(new ListSubCommand(plugin));
+        addSubCommand(new PreviewSubCommand(plugin));
+        addSubCommand(new InfoSubCommand(plugin));
+        addSubCommand(new SetSubCommand(plugin));
+        addSubCommand(new RemoveSubCommand(plugin));
+        addSubCommand(new GiveSubCommand(plugin));
+        addSubCommand(new ReloadSubCommand(plugin));
+        addSubCommand(new HelpSubCommand(plugin));
     }
 
-    /**
-     * Executes the crate command.
-     *
-     * @param senderUuid UUID of the command sender (null if console)
-     * @param senderName Name of the command sender
-     * @param args Command arguments
-     * @param hasUsePermission Whether sender has crates.use permission
-     * @param hasAdminPermission Whether sender has crates.admin permission
-     * @return true if command was handled
-     */
-    public boolean execute(UUID senderUuid, String senderName, String[] args,
-                           boolean hasUsePermission, boolean hasAdminPermission) {
-
-        if (args.length == 0) {
-            sendHelp(senderUuid, hasAdminPermission);
-            return true;
-        }
-
-        String subCommand = args[0].toLowerCase();
-
-        switch (subCommand) {
-            case "list":
-                return handleList(senderUuid, hasUsePermission);
-            case "preview":
-                return handlePreview(senderUuid, args, hasUsePermission);
-            case "set":
-                return handleSet(senderUuid, senderName, args, hasAdminPermission);
-            case "remove":
-                return handleRemove(senderUuid, senderName, hasAdminPermission);
-            case "give":
-                return handleGive(senderUuid, args, hasAdminPermission);
-            case "reload":
-                return handleReload(senderUuid, hasAdminPermission);
-            case "create":
-                return handleCreate(senderUuid, args, hasAdminPermission);
-            case "delete":
-                return handleDelete(senderUuid, args, hasAdminPermission);
-            case "info":
-                return handleInfo(senderUuid, args, hasUsePermission);
-            case "help":
-            default:
-                sendHelp(senderUuid, hasAdminPermission);
-                return true;
-        }
+    @Override
+    protected CompletableFuture<Void> execute(CommandContext ctx) {
+        // Show help by default
+        sendHelp(ctx, ctx.sender().hasPermission("crates.admin"));
+        return CompletableFuture.completedFuture(null);
     }
 
-    /**
-     * Handles /crate list - Lists all available crates.
-     */
-    private boolean handleList(UUID senderUuid, boolean hasPermission) {
-        if (!hasPermission) {
-            sendMessage(senderUuid, plugin.getMessageUtil().noPermission());
-            return true;
-        }
-
-        Collection<Crate> crates = plugin.getCrateManager().getAllCrates();
-        if (crates.isEmpty()) {
-            sendMessage(senderUuid, plugin.getMessageUtil().format("&7No crates configured."));
-            return true;
-        }
-
-        sendMessage(senderUuid, plugin.getMessageUtil().format("&6Available Crates:"));
-        for (Crate crate : crates) {
-            String info = String.format("&7- %s &8(%d rewards, %d locations)",
-                    crate.getDisplayName(),
-                    crate.getRewardCount(),
-                    crate.getLocations().size());
-            sendMessage(senderUuid, plugin.getMessageUtil().format(info));
-        }
-
-        return true;
-    }
-
-    /**
-     * Handles /crate preview <name> - Opens preview GUI for a crate.
-     */
-    private boolean handlePreview(UUID senderUuid, String[] args, boolean hasPermission) {
-        if (!hasPermission) {
-            sendMessage(senderUuid, plugin.getMessageUtil().noPermission());
-            return true;
-        }
-
-        if (senderUuid == null) {
-            sendMessage(null, plugin.getMessageUtil().format("&cThis command can only be used by players."));
-            return true;
-        }
-
-        if (args.length < 2) {
-            sendMessage(senderUuid, plugin.getMessageUtil().format("&cUsage: /crate preview <name>"));
-            return true;
-        }
-
-        String crateId = args[1].toLowerCase();
-        var crateOpt = plugin.getCrateManager().getCrate(crateId);
-
-        if (crateOpt.isEmpty()) {
-            sendMessage(senderUuid, plugin.getMessageUtil().crateNotFound(crateId));
-            return true;
-        }
-
-        plugin.getGuiManager().openPreviewGui(senderUuid, crateOpt.get());
-        return true;
-    }
-
-    /**
-     * Handles /crate set <name> - Sets the looked-at block as a crate location.
-     */
-    private boolean handleSet(UUID senderUuid, String senderName, String[] args, boolean hasPermission) {
-        if (!hasPermission) {
-            sendMessage(senderUuid, plugin.getMessageUtil().noPermission());
-            return true;
-        }
-
-        if (senderUuid == null) {
-            sendMessage(null, plugin.getMessageUtil().format("&cThis command can only be used by players."));
-            return true;
-        }
-
-        if (args.length < 2) {
-            sendMessage(senderUuid, plugin.getMessageUtil().format("&cUsage: /crate set <name>"));
-            return true;
-        }
-
-        String crateId = args[1].toLowerCase();
-        var crateOpt = plugin.getCrateManager().getCrate(crateId);
-
-        if (crateOpt.isEmpty()) {
-            sendMessage(senderUuid, plugin.getMessageUtil().crateNotFound(crateId));
-            return true;
-        }
-
-        // In actual implementation, would get the block the player is looking at
-        // Block targetBlock = player.getTargetBlock(5);
-        // CrateLocation location = new CrateLocation(targetBlock.getWorld(), targetBlock.getX(), targetBlock.getY(), targetBlock.getZ());
-
-        // Placeholder - would get actual target block
-        sendMessage(senderUuid, plugin.getMessageUtil().format("&7Look at a block and run this command to set a crate location."));
-        sendMessage(senderUuid, plugin.getMessageUtil().format("&7(Implementation requires Hytale's raycast API)"));
-
-        return true;
-    }
-
-    /**
-     * Sets a crate at a specific location (called from game with actual coordinates).
-     */
-    public boolean setCrateAtLocation(UUID senderUuid, String crateId, String world, int x, int y, int z) {
-        var crateOpt = plugin.getCrateManager().getCrate(crateId);
-        if (crateOpt.isEmpty()) {
-            sendMessage(senderUuid, plugin.getMessageUtil().crateNotFound(crateId));
-            return false;
-        }
-
-        CrateLocation location = new CrateLocation(world, x, y, z);
-        boolean success = plugin.getCrateManager().setCrateLocation(crateId, location);
-
-        if (success) {
-            sendMessage(senderUuid, plugin.getMessageUtil().crateSet(crateOpt.get().getDisplayName(), location.toDisplayString()));
-        } else {
-            sendMessage(senderUuid, plugin.getMessageUtil().format("&cFailed to set crate location."));
-        }
-
-        return success;
-    }
-
-    /**
-     * Handles /crate remove - Removes a crate from the looked-at location.
-     */
-    private boolean handleRemove(UUID senderUuid, String senderName, boolean hasPermission) {
-        if (!hasPermission) {
-            sendMessage(senderUuid, plugin.getMessageUtil().noPermission());
-            return true;
-        }
-
-        if (senderUuid == null) {
-            sendMessage(null, plugin.getMessageUtil().format("&cThis command can only be used by players."));
-            return true;
-        }
-
-        // In actual implementation, would get the block the player is looking at
-        sendMessage(senderUuid, plugin.getMessageUtil().format("&7Look at a crate and run this command to remove it."));
-        sendMessage(senderUuid, plugin.getMessageUtil().format("&7(Implementation requires Hytale's raycast API)"));
-
-        return true;
-    }
-
-    /**
-     * Removes a crate at a specific location (called from game with actual coordinates).
-     */
-    public boolean removeCrateAtLocation(UUID senderUuid, String world, int x, int y, int z) {
-        CrateLocation location = new CrateLocation(world, x, y, z);
-        boolean success = plugin.getCrateManager().removeCrateLocation(location);
-
-        if (success) {
-            sendMessage(senderUuid, plugin.getMessageUtil().crateRemoved(location.toDisplayString()));
-        } else {
-            sendMessage(senderUuid, plugin.getMessageUtil().notACrate());
-        }
-
-        return success;
-    }
-
-    /**
-     * Handles /crate give <player> <key> [amount] - Gives keys to a player.
-     */
-    private boolean handleGive(UUID senderUuid, String[] args, boolean hasPermission) {
-        if (!hasPermission) {
-            sendMessage(senderUuid, plugin.getMessageUtil().noPermission());
-            return true;
-        }
-
-        if (args.length < 3) {
-            sendMessage(senderUuid, plugin.getMessageUtil().format("&cUsage: /crate give <player> <key> [amount]"));
-            return true;
-        }
-
-        String targetPlayer = args[1];
-        String keyId = args[2].toLowerCase();
-        int amount = 1;
-
-        if (args.length >= 4) {
-            try {
-                amount = Integer.parseInt(args[3]);
-                if (amount < 1) amount = 1;
-                if (amount > 64) amount = 64;
-            } catch (NumberFormatException e) {
-                sendMessage(senderUuid, plugin.getMessageUtil().format("&cInvalid amount: " + args[3]));
-                return true;
-            }
-        }
-
-        // Check if key exists
-        var keyOpt = plugin.getKeyManager().getKey(keyId);
-        if (keyOpt.isEmpty()) {
-            sendMessage(senderUuid, plugin.getMessageUtil().keyNotFound(keyId));
-            return true;
-        }
-
-        // In actual implementation, would look up player UUID
-        // Player target = ServerAPI.getPlayer(targetPlayer);
-        // if (target == null) {
-        //     sendMessage(senderUuid, plugin.getMessageUtil().format("&cPlayer not found: " + targetPlayer));
-        //     return true;
-        // }
-
-        // Give the key (using player name as placeholder for UUID)
-        boolean success = plugin.getKeyManager().giveKey(targetPlayer, keyId, amount);
-
-        if (success) {
-            sendMessage(senderUuid, plugin.getMessageUtil().keyGiven(keyOpt.get().getDisplayName(), amount, targetPlayer));
-        } else {
-            sendMessage(senderUuid, plugin.getMessageUtil().format("&cFailed to give keys."));
-        }
-
-        return true;
-    }
-
-    /**
-     * Handles /crate reload - Reloads all configurations.
-     */
-    private boolean handleReload(UUID senderUuid, boolean hasPermission) {
-        if (!hasPermission) {
-            sendMessage(senderUuid, plugin.getMessageUtil().noPermission());
-            return true;
-        }
-
-        plugin.reload();
-        sendMessage(senderUuid, plugin.getMessageUtil().configReloaded());
-
-        return true;
-    }
-
-    /**
-     * Handles /crate create <name> - Creates a new crate.
-     */
-    private boolean handleCreate(UUID senderUuid, String[] args, boolean hasPermission) {
-        if (!hasPermission) {
-            sendMessage(senderUuid, plugin.getMessageUtil().noPermission());
-            return true;
-        }
-
-        if (args.length < 2) {
-            sendMessage(senderUuid, plugin.getMessageUtil().format("&cUsage: /crate create <name>"));
-            return true;
-        }
-
-        String crateId = args[1].toLowerCase().replaceAll("[^a-z0-9_]", "_");
-
-        // Check if crate already exists
-        if (plugin.getCrateManager().getCrate(crateId).isPresent()) {
-            sendMessage(senderUuid, plugin.getMessageUtil().format("&cA crate with that name already exists!"));
-            return true;
-        }
-
-        // In actual implementation, would open admin setup GUI
-        sendMessage(senderUuid, plugin.getMessageUtil().format("&aCreating crate: &e" + crateId));
-        sendMessage(senderUuid, plugin.getMessageUtil().format("&7Edit the config file at: &ecrates/" + crateId + ".json"));
-
-        return true;
-    }
-
-    /**
-     * Handles /crate delete <name> - Deletes a crate.
-     */
-    private boolean handleDelete(UUID senderUuid, String[] args, boolean hasPermission) {
-        if (!hasPermission) {
-            sendMessage(senderUuid, plugin.getMessageUtil().noPermission());
-            return true;
-        }
-
-        if (args.length < 2) {
-            sendMessage(senderUuid, plugin.getMessageUtil().format("&cUsage: /crate delete <name>"));
-            return true;
-        }
-
-        String crateId = args[1].toLowerCase();
-
-        if (plugin.getCrateManager().getCrate(crateId).isEmpty()) {
-            sendMessage(senderUuid, plugin.getMessageUtil().crateNotFound(crateId));
-            return true;
-        }
-
-        boolean success = plugin.getCrateManager().deleteCrate(crateId);
-
-        if (success) {
-            sendMessage(senderUuid, plugin.getMessageUtil().format("&aDeleted crate: &e" + crateId));
-        } else {
-            sendMessage(senderUuid, plugin.getMessageUtil().format("&cFailed to delete crate."));
-        }
-
-        return true;
-    }
-
-    /**
-     * Handles /crate info <name> - Shows detailed info about a crate.
-     */
-    private boolean handleInfo(UUID senderUuid, String[] args, boolean hasPermission) {
-        if (!hasPermission) {
-            sendMessage(senderUuid, plugin.getMessageUtil().noPermission());
-            return true;
-        }
-
-        if (args.length < 2) {
-            sendMessage(senderUuid, plugin.getMessageUtil().format("&cUsage: /crate info <name>"));
-            return true;
-        }
-
-        String crateId = args[1].toLowerCase();
-        var crateOpt = plugin.getCrateManager().getCrate(crateId);
-
-        if (crateOpt.isEmpty()) {
-            sendMessage(senderUuid, plugin.getMessageUtil().crateNotFound(crateId));
-            return true;
-        }
-
-        Crate crate = crateOpt.get();
-
-        sendMessage(senderUuid, plugin.getMessageUtil().format("&6=== Crate Info ==="));
-        sendMessage(senderUuid, plugin.getMessageUtil().format("&7Name: " + crate.getDisplayName()));
-        sendMessage(senderUuid, plugin.getMessageUtil().format("&7ID: &e" + crate.getId()));
-        sendMessage(senderUuid, plugin.getMessageUtil().format("&7Key: &b" + crate.getKeyId()));
-        sendMessage(senderUuid, plugin.getMessageUtil().format("&7Rewards: &e" + crate.getRewardCount()));
-        sendMessage(senderUuid, plugin.getMessageUtil().format("&7Locations: &e" + crate.getLocations().size()));
-
-        if (crate.hasLegendaryRewards()) {
-            sendMessage(senderUuid, plugin.getMessageUtil().format("&6✦ Contains LEGENDARY rewards!"));
-        }
-
-        return true;
-    }
-
-    /**
-     * Sends help information to the sender.
-     */
-    private void sendHelp(UUID senderUuid, boolean isAdmin) {
-        sendMessage(senderUuid, plugin.getMessageUtil().format("&6=== HytaleCrates Commands ==="));
-        sendMessage(senderUuid, plugin.getMessageUtil().format("&e/crate list &7- List all crates"));
-        sendMessage(senderUuid, plugin.getMessageUtil().format("&e/crate preview <name> &7- Preview crate rewards"));
-        sendMessage(senderUuid, plugin.getMessageUtil().format("&e/crate info <name> &7- Show crate details"));
+    private void sendHelp(CommandContext ctx, boolean isAdmin) {
+        ctx.sendMessage(Message.raw("=== HytaleCrates Commands ==="));
+        ctx.sendMessage(Message.raw("/crate list - List all crates"));
+        ctx.sendMessage(Message.raw("/crate preview <name> - Preview crate rewards"));
+        ctx.sendMessage(Message.raw("/crate info <name> - Show crate details"));
 
         if (isAdmin) {
-            sendMessage(senderUuid, plugin.getMessageUtil().format("&6--- Admin Commands ---"));
-            sendMessage(senderUuid, plugin.getMessageUtil().format("&e/crate set <name> &7- Set block as crate"));
-            sendMessage(senderUuid, plugin.getMessageUtil().format("&e/crate remove &7- Remove crate from block"));
-            sendMessage(senderUuid, plugin.getMessageUtil().format("&e/crate give <player> <key> [amount] &7- Give keys"));
-            sendMessage(senderUuid, plugin.getMessageUtil().format("&e/crate create <name> &7- Create new crate"));
-            sendMessage(senderUuid, plugin.getMessageUtil().format("&e/crate delete <name> &7- Delete a crate"));
-            sendMessage(senderUuid, plugin.getMessageUtil().format("&e/crate reload &7- Reload configs"));
+            ctx.sendMessage(Message.raw("--- Admin Commands ---"));
+            ctx.sendMessage(Message.raw("/crateset --crate=<name> - Set target block as crate (EASY!)"));
+            ctx.sendMessage(Message.raw("/crateremove - Remove crate from target block"));
+            ctx.sendMessage(Message.raw("/crate give --player=<name> --key=<key> - Give keys"));
+            ctx.sendMessage(Message.raw("/crate reload - Reload configs"));
+        }
+    }
+
+    // === SUBCOMMANDS ===
+
+    /**
+     * /crate list - Lists all available crates.
+     */
+    private static class ListSubCommand extends AbstractCommand {
+        private final CratesPlugin plugin;
+
+        ListSubCommand(CratesPlugin plugin) {
+            super("list", "List all available crates");
+            this.plugin = plugin;
+            requirePermission("crates.use");
+        }
+
+        @Override
+        protected CompletableFuture<Void> execute(CommandContext ctx) {
+            Collection<Crate> crates = plugin.getCrateManager().getAllCrates();
+            if (crates.isEmpty()) {
+                ctx.sendMessage(Message.raw("No crates configured."));
+                return CompletableFuture.completedFuture(null);
+            }
+
+            ctx.sendMessage(Message.raw("Available Crates:"));
+            for (Crate crate : crates) {
+                String info = String.format("- %s (%d rewards)",
+                        crate.getDisplayName(),
+                        crate.getRewardCount());
+                ctx.sendMessage(MessageUtil.legacyToMessage(info));
+            }
+            return CompletableFuture.completedFuture(null);
         }
     }
 
     /**
-     * Provides tab completion for the command.
+     * /crate preview <name> - Opens preview GUI for a crate.
      */
-    public List<String> tabComplete(String[] args, boolean hasAdminPermission) {
-        List<String> completions = new ArrayList<>();
+    private static class PreviewSubCommand extends AbstractCommand {
+        private final CratesPlugin plugin;
+        private final OptionalArg<String> crateArg;
 
-        if (args.length == 1) {
-            // First argument - subcommands
-            completions.add("list");
-            completions.add("preview");
-            completions.add("info");
-            completions.add("help");
-
-            if (hasAdminPermission) {
-                completions.add("set");
-                completions.add("remove");
-                completions.add("give");
-                completions.add("create");
-                completions.add("delete");
-                completions.add("reload");
-            }
-        } else if (args.length == 2) {
-            String subCommand = args[0].toLowerCase();
-
-            // Second argument - crate names for most commands
-            if (subCommand.equals("preview") || subCommand.equals("set") ||
-                    subCommand.equals("info") || subCommand.equals("delete")) {
-                completions.addAll(plugin.getCrateManager().getCrateIds());
-            }
-        } else if (args.length == 3) {
-            String subCommand = args[0].toLowerCase();
-
-            // Third argument - key names for give command
-            if (subCommand.equals("give")) {
-                completions.addAll(plugin.getKeyManager().getAllKeys().keySet());
-            }
+        PreviewSubCommand(CratesPlugin plugin) {
+            super("preview", "Preview crate rewards");
+            this.plugin = plugin;
+            requirePermission("crates.use");
+            this.crateArg = withOptionalArg("crate", "The crate to preview", StringArgumentType.word());
         }
 
-        // Filter based on what user has typed
-        String prefix = args[args.length - 1].toLowerCase();
-        return completions.stream()
-                .filter(s -> s.toLowerCase().startsWith(prefix))
-                .toList();
+        @Override
+        protected CompletableFuture<Void> execute(CommandContext ctx) {
+            if (!ctx.isPlayer()) {
+                ctx.sendMessage(Message.raw("This command can only be used by players."));
+                return CompletableFuture.completedFuture(null);
+            }
+
+            if (!ctx.provided(crateArg)) {
+                ctx.sendMessage(Message.raw("Usage: /crate preview <name>"));
+                return CompletableFuture.completedFuture(null);
+            }
+
+            String crateId = ctx.get(crateArg).toLowerCase();
+            var crateOpt = plugin.getCrateManager().getCrate(crateId);
+
+            if (crateOpt.isEmpty()) {
+                ctx.sendMessage(Message.raw("Crate not found: " + crateId));
+                return CompletableFuture.completedFuture(null);
+            }
+
+            plugin.getGuiManager().openPreviewGui(ctx.sender().getUuid(), crateOpt.get());
+            ctx.sendMessage(MessageUtil.legacyToMessage("Opening preview for " + crateOpt.get().getDisplayName()));
+            return CompletableFuture.completedFuture(null);
+        }
     }
 
     /**
-     * Sends a message to a player or console.
+     * /crate info <name> - Shows detailed info about a crate.
      */
-    private void sendMessage(UUID playerUuid, String message) {
-        // In actual implementation:
-        // if (playerUuid != null) {
-        //     Player player = ServerAPI.getPlayer(playerUuid);
-        //     player.sendMessage(message);
-        // } else {
-        //     ServerAPI.getConsole().sendMessage(message);
-        // }
+    private static class InfoSubCommand extends AbstractCommand {
+        private final CratesPlugin plugin;
+        private final OptionalArg<String> crateArg;
 
-        plugin.getLogger().info("[Command] " + message);
+        InfoSubCommand(CratesPlugin plugin) {
+            super("info", "Show crate details");
+            this.plugin = plugin;
+            requirePermission("crates.use");
+            this.crateArg = withOptionalArg("crate", "The crate to inspect", StringArgumentType.word());
+        }
+
+        @Override
+        protected CompletableFuture<Void> execute(CommandContext ctx) {
+            if (!ctx.provided(crateArg)) {
+                ctx.sendMessage(Message.raw("Usage: /crate info <name>"));
+                return CompletableFuture.completedFuture(null);
+            }
+
+            String crateId = ctx.get(crateArg).toLowerCase();
+            var crateOpt = plugin.getCrateManager().getCrate(crateId);
+
+            if (crateOpt.isEmpty()) {
+                ctx.sendMessage(Message.raw("Crate not found: " + crateId));
+                return CompletableFuture.completedFuture(null);
+            }
+
+            Crate crate = crateOpt.get();
+
+            ctx.sendMessage(Message.raw("=== Crate Info ==="));
+            ctx.sendMessage(MessageUtil.legacyToMessage("Name: " + crate.getDisplayName()));
+            ctx.sendMessage(Message.raw("ID: " + crate.getId()));
+            ctx.sendMessage(Message.raw("Key: " + crate.getKeyId()));
+            ctx.sendMessage(Message.raw("Rewards: " + crate.getRewardCount()));
+
+            if (crate.hasLegendaryRewards()) {
+                ctx.sendMessage(Message.raw("Contains LEGENDARY rewards!"));
+            }
+            return CompletableFuture.completedFuture(null);
+        }
+    }
+
+    /**
+     * /crate set <name> <world> <x> <y> <z> - Sets a block as a crate location.
+     */
+    private static class SetSubCommand extends AbstractCommand {
+        private final CratesPlugin plugin;
+        private final OptionalArg<String> crateArg;
+        private final OptionalArg<String> worldArg;
+        private final OptionalArg<String> xArg;
+        private final OptionalArg<String> yArg;
+        private final OptionalArg<String> zArg;
+
+        SetSubCommand(CratesPlugin plugin) {
+            super("set", "Set a block as a crate location");
+            this.plugin = plugin;
+            requirePermission("crates.admin");
+            this.crateArg = withOptionalArg("crate", "The crate type", StringArgumentType.word());
+            this.worldArg = withOptionalArg("world", "World name", StringArgumentType.word());
+            this.xArg = withOptionalArg("x", "X coordinate", StringArgumentType.word());
+            this.yArg = withOptionalArg("y", "Y coordinate", StringArgumentType.word());
+            this.zArg = withOptionalArg("z", "Z coordinate", StringArgumentType.word());
+        }
+
+        @Override
+        protected CompletableFuture<Void> execute(CommandContext ctx) {
+            if (!ctx.provided(crateArg) || !ctx.provided(worldArg) || 
+                !ctx.provided(xArg) || !ctx.provided(yArg) || !ctx.provided(zArg)) {
+                ctx.sendMessage(Message.raw("Usage: /crate set <name> <world> <x> <y> <z>"));
+                return CompletableFuture.completedFuture(null);
+            }
+
+            String crateId = ctx.get(crateArg).toLowerCase();
+            var crateOpt = plugin.getCrateManager().getCrate(crateId);
+
+            if (crateOpt.isEmpty()) {
+                ctx.sendMessage(Message.raw("Crate not found: " + crateId));
+                return CompletableFuture.completedFuture(null);
+            }
+
+            try {
+                String world = ctx.get(worldArg);
+                int x = Integer.parseInt(ctx.get(xArg));
+                int y = Integer.parseInt(ctx.get(yArg));
+                int z = Integer.parseInt(ctx.get(zArg));
+
+                CrateLocation location = new CrateLocation(world, x, y, z);
+                boolean success = plugin.getCrateManager().setCrateLocation(crateId, location);
+
+                if (success) {
+                    ctx.sendMessage(MessageUtil.legacyToMessage(
+                            "Crate " + crateOpt.get().getDisplayName() + " set at " + location.toDisplayString()
+                    ));
+                } else {
+                    ctx.sendMessage(Message.raw("Failed to set crate location."));
+                }
+            } catch (NumberFormatException e) {
+                ctx.sendMessage(Message.raw("Invalid coordinates. Use numbers for x, y, z."));
+            }
+            return CompletableFuture.completedFuture(null);
+        }
+    }
+
+    /**
+     * /crate remove <world> <x> <y> <z> - Removes a crate from a location.
+     */
+    private static class RemoveSubCommand extends AbstractCommand {
+        private final CratesPlugin plugin;
+        private final OptionalArg<String> worldArg;
+        private final OptionalArg<String> xArg;
+        private final OptionalArg<String> yArg;
+        private final OptionalArg<String> zArg;
+
+        RemoveSubCommand(CratesPlugin plugin) {
+            super("remove", "Remove a crate from a location");
+            this.plugin = plugin;
+            requirePermission("crates.admin");
+            this.worldArg = withOptionalArg("world", "World name", StringArgumentType.word());
+            this.xArg = withOptionalArg("x", "X coordinate", StringArgumentType.word());
+            this.yArg = withOptionalArg("y", "Y coordinate", StringArgumentType.word());
+            this.zArg = withOptionalArg("z", "Z coordinate", StringArgumentType.word());
+        }
+
+        @Override
+        protected CompletableFuture<Void> execute(CommandContext ctx) {
+            if (!ctx.provided(worldArg) || !ctx.provided(xArg) || 
+                !ctx.provided(yArg) || !ctx.provided(zArg)) {
+                ctx.sendMessage(Message.raw("Usage: /crate remove <world> <x> <y> <z>"));
+                return CompletableFuture.completedFuture(null);
+            }
+
+            try {
+                String world = ctx.get(worldArg);
+                int x = Integer.parseInt(ctx.get(xArg));
+                int y = Integer.parseInt(ctx.get(yArg));
+                int z = Integer.parseInt(ctx.get(zArg));
+
+                CrateLocation location = new CrateLocation(world, x, y, z);
+                boolean success = plugin.getCrateManager().removeCrateLocation(location);
+
+                if (success) {
+                    ctx.sendMessage(Message.raw("Crate removed from " + location.toDisplayString()));
+                } else {
+                    ctx.sendMessage(Message.raw("No crate found at that location."));
+                }
+            } catch (NumberFormatException e) {
+                ctx.sendMessage(Message.raw("Invalid coordinates. Use numbers for x, y, z."));
+            }
+            return CompletableFuture.completedFuture(null);
+        }
+    }
+
+    /**
+     * /crate give <player> <key> [amount] - Gives keys to a player.
+     */
+    private static class GiveSubCommand extends AbstractTargetPlayerCommand {
+        private final CratesPlugin plugin;
+        private final OptionalArg<String> keyArg;
+        private final OptionalArg<String> amountArg;
+
+        GiveSubCommand(CratesPlugin plugin) {
+            super("give", "Give keys to a player");
+            this.plugin = plugin;
+            requirePermission("crates.admin");
+            this.keyArg = withOptionalArg("key", "Key type", StringArgumentType.word());
+            this.amountArg = withOptionalArg("amount", "Amount of keys", StringArgumentType.word());
+        }
+
+        @Override
+        protected void execute(CommandContext ctx,
+                               Ref<EntityStore> senderRef,
+                               Ref<EntityStore> targetEntityRef,
+                               PlayerRef targetPlayerRef,
+                               World world,
+                               Store<EntityStore> store) {
+            if (!ctx.provided(keyArg)) {
+                ctx.sendMessage(Message.raw("Usage: /crate give --player=<name> --key=<key> [--amount=<amount>]"));
+                return;
+            }
+
+            String keyId = ctx.get(keyArg).toLowerCase();
+            int amount = 1;
+
+            if (ctx.provided(amountArg)) {
+                try {
+                    amount = Integer.parseInt(ctx.get(amountArg));
+                    if (amount < 1) amount = 1;
+                    if (amount > 64) amount = 64;
+                } catch (NumberFormatException e) {
+                    ctx.sendMessage(Message.raw("Invalid amount: " + ctx.get(amountArg)));
+                    return;
+                }
+            }
+
+            // Check if key exists
+            var keyOpt = plugin.getKeyManager().getKey(keyId);
+            if (keyOpt.isEmpty()) {
+                ctx.sendMessage(Message.raw("Key not found: " + keyId));
+                return;
+            }
+
+            // Give the key
+            boolean success = plugin.getKeyManager().giveKey(store, targetEntityRef, keyId, amount);
+
+            if (success) {
+                String targetName = targetPlayerRef != null ? targetPlayerRef.getUsername() : "player";
+                ctx.sendMessage(MessageUtil.legacyToMessage(
+                        "&aGave &e" + amount + "x " + keyOpt.get().getDisplayName() + " &ato &e" + targetName
+                ));
+            } else {
+                ctx.sendMessage(MessageUtil.legacyToMessage("&cFailed to give keys (insufficient inventory space?)"));
+            }
+        }
+    }
+
+    /**
+     * /crate reload - Reloads all configurations.
+     */
+    private static class ReloadSubCommand extends AbstractCommand {
+        private final CratesPlugin plugin;
+
+        ReloadSubCommand(CratesPlugin plugin) {
+            super("reload", "Reload plugin configurations");
+            this.plugin = plugin;
+            requirePermission("crates.admin");
+        }
+
+        @Override
+        protected CompletableFuture<Void> execute(CommandContext ctx) {
+            plugin.reload();
+            ctx.sendMessage(MessageUtil.legacyToMessage("&aHytaleCrates configurations reloaded!"));
+            return CompletableFuture.completedFuture(null);
+        }
+    }
+
+    /**
+     * /crate help - Shows help.
+     */
+    private static class HelpSubCommand extends AbstractCommand {
+        private final CratesPlugin plugin;
+
+        HelpSubCommand(CratesPlugin plugin) {
+            super("help", "Show help information");
+            this.plugin = plugin;
+        }
+
+        @Override
+        protected CompletableFuture<Void> execute(CommandContext ctx) {
+            boolean isAdmin = ctx.sender().hasPermission("crates.admin");
+            
+            ctx.sendMessage(Message.raw("=== HytaleCrates Commands ==="));
+            ctx.sendMessage(Message.raw("/crate list - List all crates"));
+            ctx.sendMessage(Message.raw("/crate preview <name> - Preview crate rewards"));
+            ctx.sendMessage(Message.raw("/crate info <name> - Show crate details"));
+
+            if (isAdmin) {
+                ctx.sendMessage(Message.raw("--- Admin Commands ---"));
+                ctx.sendMessage(Message.raw("/crateset --crate=<name> - Set target block as crate"));
+                ctx.sendMessage(Message.raw("/crateremove - Remove crate from target block"));
+                ctx.sendMessage(Message.raw("/crate give --player=<name> --key=<key> - Give keys"));
+                ctx.sendMessage(Message.raw("/crate reload - Reload configs"));
+            }
+            return CompletableFuture.completedFuture(null);
+        }
     }
 }

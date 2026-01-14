@@ -4,8 +4,12 @@
   "Version": "1.0.0",
   "Main": "com.hytalecrates.CratesPlugin",
   "Description": "A crate and key reward system with casino-style animations",
-  "Authors": ["HytaeCrates Team"],
-  "Website": "https://github.com/hytaecrates",
+  "Authors": [
+    {
+      "Name": "HytaleCrates Team"
+    }
+  ],
+  "Website": "https://github.com/hytalecrates",
   "Permissions": [
     {
       "Name": "crates.use",
@@ -22,8 +26,25 @@
     {
       "Name": "crate",
       "Description": "Main crate command",
-      "Usage": "/crate <list|preview|set|remove|give|reload|create>",
-      "Aliases": ["crates", "cr"]
+      "Usage": "/crate <list|preview|info|give|reload|help>",
+      "Aliases": [
+        {
+          "Name": "crates"
+        },
+        {
+          "Name": "cr"
+        }
+      ]
+    },
+    {
+      "Name": "crateset",
+      "Description": "Set the block you're looking at as a crate",
+      "Usage": "/crateset --crate=<name>"
+    },
+    {
+      "Name": "crateremove",
+      "Description": "Remove the crate from the block you're looking at",
+      "Usage": "/crateremove"
     }
   ]
 }

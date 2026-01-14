@@ -3,8 +3,11 @@ package com.hytalecrates.reward;
 import com.hytalecrates.CratesPlugin;
 import com.hytalecrates.crate.Crate;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.logging.Level;
 
 /**
  * Manages reward selection using weighted random algorithm.
@@ -28,7 +31,7 @@ public class RewardManager {
     public Reward selectReward(Crate crate) {
         List<Reward> rewards = crate.getRewards();
         if (rewards.isEmpty()) {
-            plugin.getLogger().warning("Attempted to select reward from empty crate: " + crate.getId());
+            plugin.getLogger().at(Level.WARNING).log("Attempted to select reward from empty crate: %s", crate.getId());
             return null;
         }
 
@@ -106,8 +109,8 @@ public class RewardManager {
         //     player.getWorld().dropItem(player.getLocation(), item);
         // }
 
-        plugin.getLogger().info("Gave reward " + reward.getItem().getDisplayName() +
-                " (" + reward.getRarity() + ") to player " + playerUuid);
+        plugin.getLogger().at(Level.INFO).log("Gave reward %s (%s) to player %s",
+                reward.getItem().getDisplayName(), reward.getRarity(), playerUuid);
         return true;
     }
 
@@ -118,8 +121,8 @@ public class RewardManager {
      * @param iterations Number of simulations
      * @return Map of reward display names to occurrence counts
      */
-    public java.util.Map<String, Integer> simulateOpens(Crate crate, int iterations) {
-        java.util.Map<String, Integer> results = new java.util.HashMap<>();
+    public Map<String, Integer> simulateOpens(Crate crate, int iterations) {
+        Map<String, Integer> results = new HashMap<>();
 
         for (int i = 0; i < iterations; i++) {
             Reward reward = selectReward(crate);

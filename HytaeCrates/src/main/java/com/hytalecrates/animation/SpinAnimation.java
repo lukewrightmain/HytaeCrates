@@ -7,6 +7,7 @@ import com.hytalecrates.reward.Reward;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.logging.Level;
 
 /**
  * Handles the casino-style spinning animation logic.
@@ -105,7 +106,7 @@ public class SpinAnimation {
         // In actual implementation, this would use Hytale's scheduler
         // ServerAPI.getScheduler().runTaskLater(() -> runAnimationStep(), delay);
 
-        plugin.getLogger().fine("Animation step " + currentStep + "/" + totalSteps + " - Delay: " + delay + "ms");
+        plugin.getLogger().at(Level.FINE).log("Animation step %d/%d - Delay: %dms", currentStep, totalSteps, delay);
     }
 
     /**
@@ -142,7 +143,7 @@ public class SpinAnimation {
             onComplete.accept(finalReward);
         }
 
-        plugin.getLogger().info("Animation completed - Final reward: " + finalReward.getItem().getDisplayName());
+        plugin.getLogger().at(Level.INFO).log("Animation completed - Final reward: %s", finalReward.getItem().getDisplayName());
     }
 
     /**

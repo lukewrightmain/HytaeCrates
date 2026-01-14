@@ -1,28 +1,29 @@
 package com.hytalecrates;
 
+import com.hypixel.hytale.server.core.plugin.JavaPlugin;
+import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
 import com.hytalecrates.commands.CrateCommand;
+import com.hytalecrates.commands.CrateSetCommand;
+import com.hytalecrates.commands.CrateRemoveCommand;
 import com.hytalecrates.config.ConfigManager;
 import com.hytalecrates.crate.CrateManager;
 import com.hytalecrates.gui.GUIManager;
 import com.hytalecrates.key.KeyManager;
-import com.hytalecrates.listeners.InventoryClickListener;
-import com.hytalecrates.listeners.PlayerInteractListener;
 import com.hytalecrates.reward.RewardManager;
 import com.hytalecrates.util.MessageUtil;
 
-import java.io.File;
-import java.util.logging.Logger;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.logging.Level;
 
 /**
  * Main plugin class for HytaleCrates.
- * Provides a crate/key reward system with casino-style animations.
+ * A crate/lootbox system for Hytale servers.
  */
-public class CratesPlugin {
+public class CratesPlugin extends JavaPlugin {
 
     private static CratesPlugin instance;
-    private final Logger logger;
-    private final File dataFolder;
-
+    
     private ConfigManager configManager;
     private CrateManager crateManager;
     private KeyManager keyManager;
@@ -30,104 +31,91 @@ public class CratesPlugin {
     private GUIManager guiManager;
     private MessageUtil messageUtil;
 
-    public CratesPlugin(File dataFolder, Logger logger) {
+    public CratesPlugin(JavaPluginInit init) {
+        super(init);
         instance = this;
-        this.dataFolder = dataFolder;
-        this.logger = logger;
     }
 
-    /**
-     * Called when the plugin is enabled.
-     */
-    public void onEnable() {
-        logger.info("Enabling HytaleCrates v1.0.0...");
-
-        // Create data folder if it doesn't exist
-        if (!dataFolder.exists()) {
-            dataFolder.mkdirs();
+    @Override
+    protected void setup() {
+        getLogger().at(Level.INFO).log("Setting up HytaleCrates v1.0.0...");
+        
+        // Create data directory if needed
+        try {
+            Path dataDir = getDataDirectory();
+            if (!Files.exists(dataDir)) {
+                Files.createDirectories(dataDir);
+            }
+        } catch (Exception e) {
+            getLogger().at(Level.SEVERE).withCause(e).log("Failed to create data directory!");
         }
-
+        
         // Initialize managers
         this.configManager = new ConfigManager(this);
-        this.configManager.loadConfigs();
-
-        this.messageUtil = new MessageUtil(configManager.getMainConfig().getPrefix());
+        this.crateManager = new CrateManager(this);
         this.keyManager = new KeyManager(this);
         this.rewardManager = new RewardManager(this);
-        this.crateManager = new CrateManager(this);
         this.guiManager = new GUIManager(this);
-
-        // Load crates from config
+        
+        // Load configurations
+        configManager.loadConfigs();
+        
+        // Initialize MessageUtil with prefix from config
+        this.messageUtil = new MessageUtil(configManager.getMainConfig().getPrefix());
+        
+        // Load crates
         crateManager.loadCrates();
-
+        
         // Register commands
-        registerCommands();
-
-        // Register event listeners
-        registerListeners();
-
-        logger.info("HytaleCrates has been enabled successfully!");
+        getCommandRegistry().registerCommand(new CrateCommand(this));
+        getCommandRegistry().registerCommand(new CrateSetCommand(this));
+        getCommandRegistry().registerCommand(new CrateRemoveCommand(this));
+        
+        getLogger().at(Level.INFO).log("HytaleCrates setup complete!");
     }
 
-    /**
-     * Called when the plugin is disabled.
-     */
-    public void onDisable() {
-        logger.info("Disabling HytaleCrates...");
+    @Override
+    protected void start() {
+        getLogger().at(Level.INFO).log("HytaleCrates has started successfully!");
+    }
 
-        // Save any pending data
+    @Override
+    protected void shutdown() {
+        getLogger().at(Level.INFO).log("Shutting down HytaleCrates...");
+        
+        // Save data
         if (crateManager != null) {
             crateManager.saveCrateLocations();
         }
-
-        // Close all open GUIs
+        
+        // Clean up GUI sessions
         if (guiManager != null) {
-            guiManager.closeAllGUIs();
+            guiManager.closeAll();
         }
-
-        logger.info("HytaleCrates has been disabled.");
+        
+        getLogger().at(Level.INFO).log("HytaleCrates has been disabled.");
     }
 
     /**
-     * Reload all configurations.
+     * Reloads all plugin configurations.
      */
     public void reload() {
-        logger.info("Reloading HytaleCrates configurations...");
+        getLogger().at(Level.INFO).log("Reloading HytaleCrates configurations...");
         configManager.loadConfigs();
+        
+        // Reinitialize MessageUtil with potentially updated prefix
+        this.messageUtil = new MessageUtil(configManager.getMainConfig().getPrefix());
+        
         crateManager.loadCrates();
-        messageUtil = new MessageUtil(configManager.getMainConfig().getPrefix());
-        logger.info("HytaleCrates configurations reloaded successfully!");
+        getLogger().at(Level.INFO).log("HytaleCrates configurations reloaded successfully!");
     }
 
-    private void registerCommands() {
-        CrateCommand crateCommand = new CrateCommand(this);
-        // Command registration would hook into Hytale's command API
-        // ServerAPI.registerCommand("crate", crateCommand);
-        logger.info("Commands registered.");
-    }
-
-    private void registerListeners() {
-        PlayerInteractListener interactListener = new PlayerInteractListener(this);
-        InventoryClickListener inventoryListener = new InventoryClickListener(this);
-        // Event registration would hook into Hytale's event API
-        // ServerAPI.registerListener(interactListener);
-        // ServerAPI.registerListener(inventoryListener);
-        logger.info("Event listeners registered.");
-    }
-
-    // Getters
+    // Static accessor
     public static CratesPlugin getInstance() {
         return instance;
     }
 
-    public Logger getLogger() {
-        return logger;
-    }
-
-    public File getDataFolder() {
-        return dataFolder;
-    }
-
+    // Getters for managers
     public ConfigManager getConfigManager() {
         return configManager;
     }

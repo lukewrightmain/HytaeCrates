@@ -6,6 +6,7 @@ import com.hytalecrates.crate.Crate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.logging.Level;
 
 /**
  * Manages all crate-related GUIs.
@@ -40,7 +41,7 @@ public class GUIManager {
         previewGui.open(playerUuid);
 
         activeGuis.put(playerUuid, new ActiveGui(GuiType.PREVIEW, crate, previewGui));
-        plugin.getLogger().info("Opened preview GUI for player " + playerUuid + " - Crate: " + crate.getId());
+        plugin.getLogger().at(Level.INFO).log("Opened preview GUI for player %s - Crate: %s", playerUuid, crate.getId());
     }
 
     /**
@@ -54,7 +55,7 @@ public class GUIManager {
         spinGui.open(playerUuid);
 
         activeGuis.put(playerUuid, new ActiveGui(GuiType.SPIN, crate, spinGui));
-        plugin.getLogger().info("Opened spin GUI for player " + playerUuid + " - Crate: " + crate.getId());
+        plugin.getLogger().at(Level.INFO).log("Opened spin GUI for player %s - Crate: %s", playerUuid, crate.getId());
 
         // Start the animation
         spinGui.startAnimation();
@@ -69,7 +70,7 @@ public class GUIManager {
 
         // For now, just log - would create AdminSetupGUI
         activeGuis.put(playerUuid, new ActiveGui(GuiType.ADMIN_SETUP, crate, null));
-        plugin.getLogger().info("Opened admin setup GUI for player " + playerUuid);
+        plugin.getLogger().at(Level.INFO).log("Opened admin setup GUI for player %s", playerUuid);
     }
 
     /**
@@ -103,7 +104,7 @@ public class GUIManager {
         if (gui != null) {
             // In actual implementation, would close the inventory
             // player.closeInventory();
-            plugin.getLogger().info("Closed GUI for player " + playerUuid);
+            plugin.getLogger().at(Level.INFO).log("Closed GUI for player %s", playerUuid);
         }
     }
 
@@ -117,7 +118,7 @@ public class GUIManager {
     /**
      * Closes all active GUIs (used on plugin disable).
      */
-    public void closeAllGUIs() {
+    public void closeAll() {
         for (UUID playerUuid : activeGuis.keySet()) {
             closeGui(playerUuid);
         }
@@ -135,7 +136,7 @@ public class GUIManager {
 
         // Save the crate configuration
         // Would gather data from the GUI and save it
-        plugin.getLogger().info("Admin saved crate configuration");
+        plugin.getLogger().at(Level.INFO).log("Admin saved crate configuration");
         closeGui(playerUuid);
     }
 
@@ -149,7 +150,7 @@ public class GUIManager {
         }
 
         // Would handle adding/editing/removing rewards
-        plugin.getLogger().info("Admin clicked reward slot " + slot);
+        plugin.getLogger().at(Level.INFO).log("Admin clicked reward slot %d", slot);
     }
 
     /**

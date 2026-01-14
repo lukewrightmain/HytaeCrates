@@ -71,21 +71,22 @@ public class ItemBuilder {
     }
 
     public ItemBuilder displayName(String displayName) {
-        this.displayName = MessageUtil.colorize(displayName);
+        // Hytale doesn't render Minecraft-style legacy codes for plain strings; keep it clean.
+        this.displayName = MessageUtil.stripColors(displayName);
         return this;
     }
 
     public ItemBuilder lore(List<String> lore) {
         if (lore != null) {
             this.lore = lore.stream()
-                    .map(MessageUtil::colorize)
+                    .map(MessageUtil::stripColors)
                     .toList();
         }
         return this;
     }
 
     public ItemBuilder addLoreLine(String line) {
-        this.lore.add(MessageUtil.colorize(line));
+        this.lore.add(MessageUtil.stripColors(line));
         return this;
     }
 

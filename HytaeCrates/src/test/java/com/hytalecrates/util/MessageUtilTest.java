@@ -10,8 +10,9 @@ class MessageUtilTest {
 
     @Test
     void testColorize() {
-        assertEquals("§aGreen", MessageUtil.colorize("&aGreen"));
-        assertEquals("§6§lBold Gold", MessageUtil.colorize("&6&lBold Gold"));
+        // In Hytale, legacy codes should be stripped for plain string contexts.
+        assertEquals("Green", MessageUtil.colorize("&aGreen"));
+        assertEquals("Bold Gold", MessageUtil.colorize("&6&lBold Gold"));
         assertEquals("Plain text", MessageUtil.colorize("Plain text"));
     }
 

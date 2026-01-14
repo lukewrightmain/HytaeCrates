@@ -9,6 +9,7 @@ import com.hytalecrates.crate.Crate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.logging.Level;
 
 /**
  * Additional admin commands for crate management.
@@ -275,6 +276,6 @@ public class CrateAdminCommand {
      * Sends a message to a player.
      */
     private void sendMessage(UUID playerUuid, String message) {
-        plugin.getLogger().info("[Admin] " + message);
+        plugin.getLogger().at(Level.INFO).log("[Admin] %s", message);
     }
 }

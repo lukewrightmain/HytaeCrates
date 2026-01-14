@@ -9,6 +9,7 @@ import com.hytalecrates.util.MessageUtil;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.logging.Level;
 
 /**
  * GUI that displays all possible rewards from a crate.
@@ -137,8 +138,8 @@ public class CratePreviewGUI {
         // }
         // player.openInventory(inv);
 
-        plugin.getLogger().info("Opening preview GUI: " + title);
-        plugin.getLogger().info("Displaying " + crate.getRewards().size() + " rewards");
+        plugin.getLogger().at(Level.INFO).log("Opening preview GUI: %s", title);
+        plugin.getLogger().at(Level.INFO).log("Displaying %d rewards", crate.getRewards().size());
     }
 
     /**

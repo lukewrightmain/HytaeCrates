@@ -13,19 +13,11 @@ java {
 
 repositories {
     mavenCentral()
-    // Uncomment when Hytale's official Maven repository is available:
-    // maven {
-    //     name = 'hytale'
-    //     url = 'https://repo.hytale.com/releases'
-    // }
 }
 
 dependencies {
-    // Uncomment when Hytale's server API is available:
-    // compileOnly 'com.hytale:server-api:1.0.0'
-    
-    // Or add the server API JAR locally:
-    // compileOnly files('libs/hytale-server-api.jar')
+    // Hytale Server API - add the server JAR to libs folder
+    compileOnly files('libs/HytaleServer.jar')
     
     implementation 'com.google.code.gson:gson:2.10.1'
     

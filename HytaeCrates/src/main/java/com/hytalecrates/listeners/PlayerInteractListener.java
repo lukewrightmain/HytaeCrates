@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.logging.Level;
 
 /**
  * Listens for player interactions with crate blocks.
@@ -193,7 +194,7 @@ public class PlayerInteractListener {
         // In actual implementation:
         // Player player = ServerAPI.getPlayer(playerUuid);
         // player.sendMessage(message);
-        plugin.getLogger().info("[Message to " + playerUuid + "] " + message);
+        plugin.getLogger().at(Level.INFO).log("[Message to %s] %s", playerUuid, message);
     }
 
     /**

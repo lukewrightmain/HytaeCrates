@@ -7,6 +7,8 @@ import com.hytalecrates.config.CrateConfig;
 import java.io.*;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.logging.Level;
 
@@ -18,13 +20,13 @@ public class CrateManager {
     private final CratesPlugin plugin;
     private final Map<String, Crate> crates;
     private final Map<CrateLocation, String> locationToCrate;
-    private final File locationsFile;
+    private final Path locationsPath;
 
     public CrateManager(CratesPlugin plugin) {
         this.plugin = plugin;
         this.crates = new HashMap<>();
         this.locationToCrate = new HashMap<>();
-        this.locationsFile = new File(plugin.getDataFolder(), "locations.json");
+        this.locationsPath = plugin.getDataDirectory().resolve("locations.json");
     }
 
     /**
@@ -46,7 +48,7 @@ public class CrateManager {
         // Load saved locations
         loadCrateLocations();
 
-        plugin.getLogger().info("Loaded " + crates.size() + " crate(s).");
+        plugin.getLogger().at(Level.INFO).log("Loaded %d crate(s).", crates.size());
     }
 
     /**
@@ -99,7 +101,7 @@ public class CrateManager {
         // Save locations
         saveCrateLocations();
 
-        plugin.getLogger().info("Set crate " + crateId + " at " + location.toDisplayString());
+        plugin.getLogger().at(Level.INFO).log("Set crate %s at %s", crateId, location.toDisplayString());
         return true;
     }
 
@@ -112,7 +114,7 @@ public class CrateManager {
             Optional<Crate> crateOpt = getCrate(crateId);
             crateOpt.ifPresent(crate -> crate.removeLocation(location));
             saveCrateLocations();
-            plugin.getLogger().info("Removed crate from " + location.toDisplayString());
+            plugin.getLogger().at(Level.INFO).log("Removed crate from %s", location.toDisplayString());
             return true;
         }
         return false;
@@ -168,10 +170,10 @@ public class CrateManager {
             }
         }
 
-        try (Writer writer = new OutputStreamWriter(new FileOutputStream(locationsFile), StandardCharsets.UTF_8)) {
+        try (Writer writer = Files.newBufferedWriter(locationsPath, StandardCharsets.UTF_8)) {
             plugin.getConfigManager().getGson().toJson(locationData, writer);
         } catch (IOException e) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to save crate locations", e);
+            plugin.getLogger().at(Level.SEVERE).withCause(e).log("Failed to save crate locations");
         }
     }
 
@@ -179,11 +181,11 @@ public class CrateManager {
      * Loads crate locations from file.
      */
     private void loadCrateLocations() {
-        if (!locationsFile.exists()) {
+        if (!Files.exists(locationsPath)) {
             return;
         }
 
-        try (Reader reader = new InputStreamReader(new FileInputStream(locationsFile), StandardCharsets.UTF_8)) {
+        try (Reader reader = Files.newBufferedReader(locationsPath, StandardCharsets.UTF_8)) {
             Type type = new TypeToken<Map<String, List<String>>>() {}.getType();
             Map<String, List<String>> locationData = plugin.getConfigManager().getGson().fromJson(reader, type);
 
@@ -192,7 +194,7 @@ public class CrateManager {
                     String crateId = entry.getKey();
                     Optional<Crate> crateOpt = getCrate(crateId);
                     if (crateOpt.isEmpty()) {
-                        plugin.getLogger().warning("Unknown crate in locations file: " + crateId);
+                        plugin.getLogger().at(Level.WARNING).log("Unknown crate in locations file: %s", crateId);
                         continue;
                     }
 
@@ -207,9 +209,9 @@ public class CrateManager {
                 }
             }
 
-            plugin.getLogger().info("Loaded " + locationToCrate.size() + " crate location(s).");
+            plugin.getLogger().at(Level.INFO).log("Loaded %d crate location(s).", locationToCrate.size());
         } catch (Exception e) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to load crate locations", e);
+            plugin.getLogger().at(Level.SEVERE).withCause(e).log("Failed to load crate locations");
         }
     }
 

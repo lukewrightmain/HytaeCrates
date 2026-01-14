@@ -12,6 +12,7 @@ import com.hytalecrates.util.MessageUtil;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.logging.Level;
 
 /**
  * GUI that displays the slot machine spinning animation.
@@ -116,7 +117,7 @@ public class CrateSpinGUI {
         // }
         // player.openInventory(inv);
 
-        plugin.getLogger().info("Opening spin GUI: " + title);
+        plugin.getLogger().at(Level.INFO).log("Opening spin GUI: %s", title);
 
         // Play crate opening sound
         soundEffect.playCrateOpenSound(playerUuid);
@@ -137,7 +138,7 @@ public class CrateSpinGUI {
         // Start the animation
         animation.start();
 
-        plugin.getLogger().info("Started spin animation for player " + playerUuid);
+        plugin.getLogger().at(Level.INFO).log("Started spin animation for player %s", playerUuid);
     }
 
     /**
@@ -177,14 +178,14 @@ public class CrateSpinGUI {
         //     inv.setItem(SPIN_SLOTS[i], items.get(SPIN_SLOTS[i]).toItemStack());
         // }
 
-        plugin.getLogger().fine("Updated spin GUI display");
+        plugin.getLogger().at(Level.FINE).log("Updated spin GUI display");
     }
 
     /**
      * Called when the animation completes.
      */
     private void onAnimationComplete(Reward wonReward) {
-        plugin.getLogger().info("Animation complete! Won: " + wonReward.getItem().getDisplayName());
+        plugin.getLogger().at(Level.INFO).log("Animation complete! Won: %s", wonReward.getItem().getDisplayName());
 
         // Play win sound based on rarity
         soundEffect.playWinSound(playerUuid, wonReward.getRarity());
@@ -257,7 +258,7 @@ public class CrateSpinGUI {
         // In actual implementation:
         // ServerAPI.broadcast(message);
 
-        plugin.getLogger().info("[BROADCAST] " + message);
+        plugin.getLogger().at(Level.INFO).log("[BROADCAST] %s", message);
     }
 
     /**
@@ -269,7 +270,7 @@ public class CrateSpinGUI {
         //     plugin.getGuiManager().closeGui(playerUuid);
         // }, 60); // 3 seconds
 
-        plugin.getLogger().info("Scheduled GUI close for player " + playerUuid);
+        plugin.getLogger().at(Level.INFO).log("Scheduled GUI close for player %s", playerUuid);
     }
 
     /**
