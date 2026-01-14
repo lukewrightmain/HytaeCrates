@@ -1,0 +1,29 @@
+{
+  "prefix": "&6[Crates] &r",
+  "animation": {
+    "spinDuration": 4000,
+    "tickSound": "ui.button.click",
+    "winSound": "entity.player.levelup",
+    "spinSound": "block.note_block.pling",
+    "legendarySound": "ui.toast.challenge_complete"
+  },
+  "announcements": {
+    "enabled": true,
+    "format": "&e{player} &7opened a &b{crate} &7and won {rarity_color}{item}&7!",
+    "legendaryFormat": "&6&l★ &e{player} &7won &6&l{item} &7from &b{crate}&7! &6&l★"
+  },
+  "particles": {
+    "enabled": true,
+    "commonParticle": "VILLAGER_HAPPY",
+    "uncommonParticle": "VILLAGER_HAPPY",
+    "rareParticle": "ENCHANTMENT_TABLE",
+    "epicParticle": "PORTAL",
+    "legendaryParticle": "FIREWORK"
+  },
+  "settings": {
+    "requireKeyInHand": true,
+    "consumeKeyOnUse": true,
+    "preventCrateBreak": true,
+    "cooldownSeconds": 0
+  }
+}

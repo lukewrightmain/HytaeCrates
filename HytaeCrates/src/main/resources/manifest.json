@@ -1,0 +1,29 @@
+{
+  "group": "com.hytaecrates",
+  "name": "HytaeCrates",
+  "version": "1.0.0",
+  "main": "com.hytaecrates.CratesPlugin",
+  "description": "A crate and key reward system with casino-style animations",
+  "authors": ["HytaeCrates Team"],
+  "website": "https://github.com/hytaecrates",
+  "permissions": [
+    {
+      "name": "crates.use",
+      "description": "Allows players to use crates and preview rewards",
+      "default": true
+    },
+    {
+      "name": "crates.admin",
+      "description": "Allows operators to manage crates, give keys, and reload config",
+      "default": false
+    }
+  ],
+  "commands": [
+    {
+      "name": "crate",
+      "description": "Main crate command",
+      "usage": "/crate <list|preview|set|remove|give|reload|create>",
+      "aliases": ["crates", "cr"]
+    }
+  ]
+}

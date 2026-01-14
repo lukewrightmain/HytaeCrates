@@ -1,0 +1,26 @@
+# Gradle
+.gradle/
+build/
+out/
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Runtime
+logs/
+*.log
+
+# Build artifacts
+*.jar
+*.class
+
+# Local config (if any sensitive data)
+# config/config.local.json

@@ -1,0 +1,124 @@
+{
+  "id": "vote_crate",
+  "displayName": "&bVote Crate",
+  "blockType": "CHEST",
+  "keyId": "vote_key",
+  "keyItem": {
+    "material": "STICK",
+    "displayName": "&b&lVote Key",
+    "enchanted": true,
+    "lore": [
+      "&7Right-click on a &bVote Crate",
+      "&7to claim your reward!",
+      "",
+      "&8Obtained from voting"
+    ]
+  },
+  "rewards": [
+    {
+      "item": {
+        "material": "DIAMOND",
+        "amount": 1,
+        "displayName": "&bDiamond"
+      },
+      "rarity": "COMMON",
+      "weight": 50,
+      "chance": 50.0
+    },
+    {
+      "item": {
+        "material": "DIAMOND",
+        "amount": 5,
+        "displayName": "&bDiamonds x5"
+      },
+      "rarity": "UNCOMMON",
+      "weight": 25,
+      "chance": 25.0
+    },
+    {
+      "item": {
+        "material": "IRON_INGOT",
+        "amount": 16,
+        "displayName": "&7Iron Ingots x16"
+      },
+      "rarity": "COMMON",
+      "weight": 50,
+      "chance": 50.0
+    },
+    {
+      "item": {
+        "material": "GOLD_INGOT",
+        "amount": 8,
+        "displayName": "&6Gold Ingots x8"
+      },
+      "rarity": "UNCOMMON",
+      "weight": 25,
+      "chance": 25.0
+    },
+    {
+      "item": {
+        "material": "EMERALD",
+        "amount": 3,
+        "displayName": "&aEmeralds x3"
+      },
+      "rarity": "RARE",
+      "weight": 15,
+      "chance": 15.0
+    },
+    {
+      "item": {
+        "material": "DIAMOND_SWORD",
+        "amount": 1,
+        "displayName": "&9Warrior's Blade",
+        "enchantments": {
+          "SHARPNESS": 3,
+          "UNBREAKING": 2
+        },
+        "lore": [
+          "&7A blade forged for warriors",
+          "&5Epic Weapon"
+        ]
+      },
+      "rarity": "EPIC",
+      "weight": 7,
+      "chance": 7.0
+    },
+    {
+      "item": {
+        "material": "DIAMOND_SWORD",
+        "amount": 1,
+        "displayName": "&6&lFlame Blade",
+        "enchantments": {
+          "SHARPNESS": 5,
+          "FIRE_ASPECT": 2,
+          "UNBREAKING": 3
+        },
+        "lore": [
+          "&7A legendary blade of fire",
+          "&6&lLEGENDARY WEAPON"
+        ]
+      },
+      "rarity": "LEGENDARY",
+      "weight": 3,
+      "chance": 3.0
+    },
+    {
+      "item": {
+        "material": "NETHERITE_INGOT",
+        "amount": 1,
+        "displayName": "&4&lNetherite Ingot"
+      },
+      "rarity": "LEGENDARY",
+      "weight": 2,
+      "chance": 2.0
+    }
+  ],
+  "hologram": {
+    "enabled": true,
+    "lines": [
+      "&b&lVOTE CRATE",
+      "&7Right-click with a &bVote Key",
+      "&7to open!"
+    ]
+  }
+}

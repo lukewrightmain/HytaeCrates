@@ -1,0 +1,142 @@
+{
+  "id": "legendary_crate",
+  "displayName": "&6&lLegendary Crate",
+  "blockType": "ENDER_CHEST",
+  "keyId": "legendary_key",
+  "keyItem": {
+    "material": "BLAZE_ROD",
+    "displayName": "&6&lLegendary Key",
+    "enchanted": true,
+    "lore": [
+      "&7Right-click on a &6&lLegendary Crate",
+      "&7to claim incredible rewards!",
+      "",
+      "&6Contains legendary items!"
+    ]
+  },
+  "rewards": [
+    {
+      "item": {
+        "material": "DIAMOND_BLOCK",
+        "amount": 8,
+        "displayName": "&bDiamond Blocks x8"
+      },
+      "rarity": "COMMON",
+      "weight": 35,
+      "chance": 35.0
+    },
+    {
+      "item": {
+        "material": "EMERALD_BLOCK",
+        "amount": 4,
+        "displayName": "&aEmerald Blocks x4"
+      },
+      "rarity": "UNCOMMON",
+      "weight": 25,
+      "chance": 25.0
+    },
+    {
+      "item": {
+        "material": "NETHERITE_INGOT",
+        "amount": 2,
+        "displayName": "&4Netherite Ingots x2"
+      },
+      "rarity": "RARE",
+      "weight": 15,
+      "chance": 15.0
+    },
+    {
+      "item": {
+        "material": "NETHERITE_SWORD",
+        "amount": 1,
+        "displayName": "&5&lVoid Slayer",
+        "enchantments": {
+          "SHARPNESS": 5,
+          "LOOTING": 3,
+          "UNBREAKING": 3,
+          "MENDING": 1
+        },
+        "lore": [
+          "&7A blade forged in the void",
+          "&5Epic Weapon"
+        ]
+      },
+      "rarity": "EPIC",
+      "weight": 10,
+      "chance": 10.0
+    },
+    {
+      "item": {
+        "material": "NETHERITE_CHESTPLATE",
+        "amount": 1,
+        "displayName": "&5&lVoid Guardian Chestplate",
+        "enchantments": {
+          "PROTECTION": 4,
+          "UNBREAKING": 3,
+          "MENDING": 1
+        },
+        "lore": [
+          "&7Armor blessed by the ancients",
+          "&5Epic Armor"
+        ]
+      },
+      "rarity": "EPIC",
+      "weight": 7,
+      "chance": 7.0
+    },
+    {
+      "item": {
+        "material": "NETHERITE_SWORD",
+        "amount": 1,
+        "displayName": "&6&l✦ Blade of Legends ✦",
+        "enchantments": {
+          "SHARPNESS": 7,
+          "FIRE_ASPECT": 3,
+          "LOOTING": 5,
+          "UNBREAKING": 5,
+          "MENDING": 1,
+          "SWEEPING_EDGE": 3
+        },
+        "lore": [
+          "&7Forged by the gods themselves",
+          "&7This blade contains infinite power",
+          "",
+          "&6&lLEGENDARY WEAPON"
+        ]
+      },
+      "rarity": "LEGENDARY",
+      "weight": 5,
+      "chance": 5.0
+    },
+    {
+      "item": {
+        "material": "ELYTRA",
+        "amount": 1,
+        "displayName": "&6&l✦ Wings of Eternity ✦",
+        "enchantments": {
+          "UNBREAKING": 5,
+          "MENDING": 1
+        },
+        "lore": [
+          "&7Soar through the skies",
+          "&7with celestial grace",
+          "",
+          "&6&lLEGENDARY ITEM"
+        ]
+      },
+      "rarity": "LEGENDARY",
+      "weight": 3,
+      "chance": 3.0
+    }
+  ],
+  "hologram": {
+    "enabled": true,
+    "lines": [
+      "&6&l✦ LEGENDARY CRATE ✦",
+      "&7Right-click with a &6&lLegendary Key",
+      "&7for incredible rewards!",
+      "",
+      "&eContains legendary items!"
+    ]
+  }
+}
