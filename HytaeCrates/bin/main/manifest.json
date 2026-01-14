@@ -45,6 +45,19 @@
       "Name": "crateremove",
       "Description": "Remove the crate from the block you're looking at",
       "Usage": "/crateremove"
+    },
+    {
+      "Name": "crateopen",
+      "Description": "Open the crate you're looking at (requires key in hand)",
+      "Usage": "/crateopen",
+      "Aliases": [
+        {
+          "Name": "openbox"
+        },
+        {
+          "Name": "opencrate"
+        }
+      ]
     }
   ]
 }

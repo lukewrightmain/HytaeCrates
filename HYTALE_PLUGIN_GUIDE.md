@@ -94,6 +94,120 @@ Useful interaction events discovered:
 - `com.hypixel.hytale.server.core.event.events.player.PlayerInteractEvent`
 - `com.hypixel.hytale.server.core.event.events.ecs.UseBlockEvent` (has `InteractionContext`)
 
+### ECS Events vs EventRegistry (critical distinction)
+
+Some events (like `UseBlockEvent.Pre`) are **ECS events** (`com.hypixel.hytale.component.system.EcsEvent`), not normal `IEvent`s.
+Those will **NOT** fire through `EventRegistry`.
+
+To handle ECS events, register a `WorldEventSystem` (or `EntityEventSystem`) via the plugin’s ECS registry proxy:
+
+```java
+import com.hypixel.hytale.component.dependency.RootDependency;
+import com.hypixel.hytale.component.system.WorldEventSystem;
+import com.hypixel.hytale.server.core.event.events.ecs.UseBlockEvent;
+import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+
+// In plugin setup():
+getEntityStoreRegistry().registerWorldEventType(UseBlockEvent.Pre.class);
+getEntityStoreRegistry().registerSystem(new WorldEventSystem<EntityStore, UseBlockEvent.Pre>(UseBlockEvent.Pre.class) {
+    @Override
+    public java.util.Set<com.hypixel.hytale.component.dependency.Dependency<EntityStore>> getDependencies() {
+        return RootDependency.firstSet(); // run early
+    }
+
+    @Override
+    public void handle(com.hypixel.hytale.component.Store<EntityStore> store,
+                       com.hypixel.hytale.component.CommandBuffer<EntityStore> buffer,
+                       UseBlockEvent.Pre event) {
+        // event.setCancelled(true) to stop chest-open
+    }
+});
+```
+
+### Block Interaction System (important for chest/container handling)
+
+Hytale's block interaction system works differently from simple event handlers:
+
+1. Each `BlockType` has an `interactions` map that defines what interaction runs for each action type
+2. The interactions are processed by `InteractionManager` through a specific pipeline
+3. Block interactions (like opening chests) may bypass standard events
+
+**InteractionType enum** (from `com.hypixel.hytale.protocol.InteractionType`):
+
+| Type | Trigger | Notes |
+|------|---------|-------|
+| `Primary` | Left mouse button | Attack/break |
+| `Secondary` | Right mouse button | Place/use item on block |
+| `Use` | F key | "Press F to open" prompts |
+| `Pick` | Middle mouse button | Pick block |
+| `Pickup` | Pickup action | Item pickup |
+| `Ability1/2/3` | Ability keys | Special abilities |
+
+**Intercepting block interactions:**
+
+For containers (chests, crates, etc.), the F key triggers `InteractionType.Use` which runs `OpenContainerInteraction`. To intercept this:
+
+```java
+// Option 1: Handle right-click (Secondary) instead - more reliable
+getEventRegistry().registerGlobal(EventPriority.FIRST, PlayerInteractEvent.class, event -> {
+    if (event.getActionType() == InteractionType.Secondary) {
+        Vector3i target = event.getTargetBlock();
+        if (target != null && isYourSpecialBlock(target)) {
+            // Handle custom interaction
+            event.setCancelled(true); // Prevent default behavior
+        }
+    }
+});
+
+// Option 2: Use ECS WorldEventSystem for UseBlockEvent.Pre (F key)
+// Note: This may not always fire before container opens depending on pipeline order
+```
+
+**PlayerInteractEvent details (deprecated - may not fire):**
+
+```java
+public class PlayerInteractEvent implements ICancellable {
+    InteractionType getActionType();  // Primary, Secondary, Use, etc.
+    Vector3i getTargetBlock();        // Block being interacted with
+    ItemStack getItemInHand();        // Item player is holding
+    Entity getTargetEntity();         // Entity being interacted with (if any)
+    void setCancelled(boolean);       // Cancel default behavior
+}
+```
+
+**PlayerMouseButtonEvent (recommended alternative):**
+
+This event fires when the player clicks a mouse button. It may be more reliable than `PlayerInteractEvent`:
+
+```java
+import com.hypixel.hytale.server.core.event.events.player.PlayerMouseButtonEvent;
+import com.hypixel.hytale.protocol.MouseButtonType;
+
+getEventRegistry().registerGlobal(EventPriority.FIRST, PlayerMouseButtonEvent.class, event -> {
+    var mouseButton = event.getMouseButton();
+    
+    // Check for right-click
+    if (mouseButton != null && mouseButton.mouseButtonType == MouseButtonType.Right) {
+        Vector3i target = event.getTargetBlock();
+        Item heldItem = event.getItemInHand();  // Note: returns Item config, not ItemStack
+        Player player = event.getPlayer();
+        
+        if (target != null && isYourSpecialBlock(target)) {
+            // Handle custom interaction
+            event.setCancelled(true);
+        }
+    }
+});
+```
+
+| MouseButtonType | Description |
+|-----------------|-------------|
+| `Left` | Left mouse button |
+| `Right` | Right mouse button |
+| `Middle` | Middle mouse button |
+| `X1` | Extra button 1 |
+| `X2` | Extra button 2 |
+
 ### Discovering item asset ids (important)
 
 Minecraft-style item names like `STICK`, `DIAMOND`, etc are **not** valid Hytale item ids.
