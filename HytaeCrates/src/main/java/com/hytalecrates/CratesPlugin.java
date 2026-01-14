@@ -14,7 +14,7 @@ import java.io.File;
 import java.util.logging.Logger;
 
 /**
- * Main plugin class for HytaeCrates.
+ * Main plugin class for HytaleCrates.
  * Provides a crate/key reward system with casino-style animations.
  */
 public class CratesPlugin {
@@ -40,7 +40,7 @@ public class CratesPlugin {
      * Called when the plugin is enabled.
      */
     public void onEnable() {
-        logger.info("Enabling HytaeCrates v1.0.0...");
+        logger.info("Enabling HytaleCrates v1.0.0...");
 
         // Create data folder if it doesn't exist
         if (!dataFolder.exists()) {
@@ -66,14 +66,14 @@ public class CratesPlugin {
         // Register event listeners
         registerListeners();
 
-        logger.info("HytaeCrates has been enabled successfully!");
+        logger.info("HytaleCrates has been enabled successfully!");
     }
 
     /**
      * Called when the plugin is disabled.
      */
     public void onDisable() {
-        logger.info("Disabling HytaeCrates...");
+        logger.info("Disabling HytaleCrates...");
 
         // Save any pending data
         if (crateManager != null) {
@@ -85,18 +85,18 @@ public class CratesPlugin {
             guiManager.closeAllGUIs();
         }
 
-        logger.info("HytaeCrates has been disabled.");
+        logger.info("HytaleCrates has been disabled.");
     }
 
     /**
      * Reload all configurations.
      */
     public void reload() {
-        logger.info("Reloading HytaeCrates configurations...");
+        logger.info("Reloading HytaleCrates configurations...");
         configManager.loadConfigs();
         crateManager.loadCrates();
         messageUtil = new MessageUtil(configManager.getMainConfig().getPrefix());
-        logger.info("HytaeCrates configurations reloaded successfully!");
+        logger.info("HytaleCrates configurations reloaded successfully!");
     }
 
     private void registerCommands() {

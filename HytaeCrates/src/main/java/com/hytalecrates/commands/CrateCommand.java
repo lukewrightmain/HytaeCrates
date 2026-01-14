@@ -395,7 +395,7 @@ public class CrateCommand {
      * Sends help information to the sender.
      */
     private void sendHelp(UUID senderUuid, boolean isAdmin) {
-        sendMessage(senderUuid, plugin.getMessageUtil().format("&6=== HytaeCrates Commands ==="));
+        sendMessage(senderUuid, plugin.getMessageUtil().format("&6=== HytaleCrates Commands ==="));
         sendMessage(senderUuid, plugin.getMessageUtil().format("&e/crate list &7- List all crates"));
         sendMessage(senderUuid, plugin.getMessageUtil().format("&e/crate preview <name> &7- Preview crate rewards"));
         sendMessage(senderUuid, plugin.getMessageUtil().format("&e/crate info <name> &7- Show crate details"));

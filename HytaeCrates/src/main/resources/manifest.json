@@ -1,29 +1,29 @@
 {
-  "group": "com.hytaecrates",
-  "name": "HytaeCrates",
-  "version": "1.0.0",
-  "main": "com.hytaecrates.CratesPlugin",
-  "description": "A crate and key reward system with casino-style animations",
-  "authors": ["HytaeCrates Team"],
-  "website": "https://github.com/hytaecrates",
-  "permissions": [
+  "Group": "com.hytalecrates",
+  "Name": "HytaleCrates",
+  "Version": "1.0.0",
+  "Main": "com.hytalecrates.CratesPlugin",
+  "Description": "A crate and key reward system with casino-style animations",
+  "Authors": ["HytaeCrates Team"],
+  "Website": "https://github.com/hytaecrates",
+  "Permissions": [
     {
-      "name": "crates.use",
-      "description": "Allows players to use crates and preview rewards",
-      "default": true
+      "Name": "crates.use",
+      "Description": "Allows players to use crates and preview rewards",
+      "Default": true
     },
     {
-      "name": "crates.admin",
-      "description": "Allows operators to manage crates, give keys, and reload config",
-      "default": false
+      "Name": "crates.admin",
+      "Description": "Allows operators to manage crates, give keys, and reload config",
+      "Default": false
     }
   ],
-  "commands": [
+  "Commands": [
     {
-      "name": "crate",
-      "description": "Main crate command",
-      "usage": "/crate <list|preview|set|remove|give|reload|create>",
-      "aliases": ["crates", "cr"]
+      "Name": "crate",
+      "Description": "Main crate command",
+      "Usage": "/crate <list|preview|set|remove|give|reload|create>",
+      "Aliases": ["crates", "cr"]
     }
   ]
 }

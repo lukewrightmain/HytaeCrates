@@ -14,8 +14,8 @@ public class CrateKey {
     private final ItemConfig itemConfig;
 
     // NBT tag key used to identify crate keys
-    public static final String NBT_KEY_TAG = "HytaeCratesKey";
-    public static final String NBT_CRATE_TAG = "HytaeCratesCrate";
+    public static final String NBT_KEY_TAG = "HytaleCratesKey";
+    public static final String NBT_CRATE_TAG = "HytaleCratesCrate";
 
     public CrateKey(String keyId, String crateId, ItemConfig itemConfig) {
         this.keyId = keyId;

@@ -2,7 +2,7 @@ plugins {
     id 'java'
 }
 
-group = 'com.hytaecrates'
+group = 'com.hytalecrates'
 version = '1.0.0'
 
 java {
@@ -41,7 +41,7 @@ test {
 jar {
     manifest {
         attributes(
-            'Main-Class': 'com.hytaecrates.CratesPlugin'
+            'Main-Class': 'com.hytalecrates.CratesPlugin'
         )
     }
     from {
